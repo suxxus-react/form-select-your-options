@@ -1,3 +1,3 @@
-# start-vite-react-ts-prettier-lint
+# select options 
 
-to start a react project using prettier eslint and husky
+React excercise 
