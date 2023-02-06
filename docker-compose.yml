@@ -1,0 +1,16 @@
+version: "0"
+name: form-select-your-options
+services:
+  develop:
+    image: vite-react-ts-project
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: select-your-options
+    volumes:
+      - .:/app
+      - ./src:/app
+      - ./public:/app
+      - ./node_modules:/app
+    ports:
+      - 5500:5173
