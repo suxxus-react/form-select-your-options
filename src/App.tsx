@@ -217,7 +217,10 @@ function App() {
       }
     };
 
-    if (data.isPost) postData();
+    if (data.isPost) {
+      postData();
+      setData({ ...data, isPost: false });
+    }
   }, [data]);
 
   return (
