@@ -75,6 +75,7 @@ function Form({
 }: Ui): JSX.Element {
   return (
     <form
+      className="user-options"
       onSubmit={(evt) => {
         evt.preventDefault();
         const data: Model = {
@@ -85,7 +86,7 @@ function Form({
         doPost(data);
       }}
     >
-      <ul>
+      <ul className="option-group mb-10">
         <li>
           <label htmlFor="email">Email notifications</label>
           <Checkbox
@@ -116,8 +117,11 @@ function Form({
               },
             }}
           />
-          {videoCtrls.selected && (
-            <ul>
+        </li>
+        {/* subgroup */}
+        {videoCtrls.selected && (
+          <li>
+            <ul className="option-group option-subgroup">
               <li>
                 <label htmlFor="audio">Audio </label>
                 <Checkbox
@@ -137,7 +141,6 @@ function Form({
                   }}
                 />
               </li>
-
               <li>
                 <label htmlFor="wifi">With out wifi </label>
                 <Checkbox
@@ -158,8 +161,9 @@ function Form({
                 />
               </li>
             </ul>
-          )}
-        </li>
+          </li>
+        )}
+        {/* end subgroup */}
         <li>
           <label htmlFor="location">Use location</label>
           <Checkbox
@@ -244,6 +248,7 @@ function App() {
 
   return (
     <div className="App">
+      <h2 className="title">Select your options</h2>
       <Form {...{ ...state, dispatch, doPost: setData }} />
     </div>
   );
