@@ -1,4 +1,4 @@
-import { useReducer, useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import "./App.css";
 
 type Video = {
@@ -15,30 +15,15 @@ type Model = {
   };
 };
 
-type VideoCtrl = {
-  type: "VideoCtrl";
-  payload: {
-    selected: boolean;
-    audio: boolean;
-    noWifi: boolean;
-  };
+type DataPost = {
+  isPost: boolean;
+  state: Model;
 };
-
-type EmailNotification = {
-  type: "EmailNotification";
-};
-
-type UseLocation = {
-  type: "UseLocation";
-};
-
-type Msg = EmailNotification | UseLocation | VideoCtrl;
-
-type Dispatch = (msg: Msg) => void;
-
+//
+type ReactDispatch<T> = React.Dispatch<React.SetStateAction<T>>;
 type Ui = Model & {
-  dispatch: Dispatch;
-  doPost: React.Dispatch<React.SetStateAction<Model>>;
+  dispatch: ReactDispatch<Model>;
+  doPost: ReactDispatch<DataPost>;
 };
 
 type OnEvtHandler<T> = T;
@@ -78,12 +63,15 @@ function Form({
       className="user-options"
       onSubmit={(evt) => {
         evt.preventDefault();
-        const data: Model = {
-          emailNotifications,
-          useLocation,
-          videoCtrls,
+        const post: DataPost = {
+          isPost: true,
+          state: {
+            emailNotifications,
+            useLocation,
+            videoCtrls,
+          },
         };
-        doPost(data);
+        doPost(post);
       }}
     >
       <ul className="option-group mb-10">
@@ -94,7 +82,10 @@ function Form({
               id: "email",
               isChecked: emailNotifications,
               onEventHandler: () => {
-                dispatch({ type: "EmailNotification" });
+                dispatch((prevState) => ({
+                  ...prevState,
+                  emailNotifications: !emailNotifications,
+                }));
               },
             }}
           />
@@ -106,14 +97,13 @@ function Form({
               id: "video",
               isChecked: videoCtrls.selected,
               onEventHandler: () => {
-                dispatch({
-                  type: "VideoCtrl",
-                  payload: {
+                dispatch((prevState) => ({
+                  ...prevState,
+                  videoCtrls: {
+                    ...videoCtrls,
                     selected: !videoCtrls.selected,
-                    audio: videoCtrls.ctrls.audio,
-                    noWifi: videoCtrls.ctrls.noWifi,
                   },
-                });
+                }));
               },
             }}
           />
@@ -129,14 +119,16 @@ function Form({
                     id: "audio",
                     isChecked: videoCtrls.ctrls.audio,
                     onEventHandler: () => {
-                      dispatch({
-                        type: "VideoCtrl",
-                        payload: {
-                          selected: videoCtrls.selected,
-                          audio: !videoCtrls.ctrls.audio,
-                          noWifi: videoCtrls.ctrls.noWifi,
+                      dispatch((prevState) => ({
+                        ...prevState,
+                        videoCtrls: {
+                          ...videoCtrls,
+                          ctrls: {
+                            ...videoCtrls.ctrls,
+                            audio: !videoCtrls.ctrls.audio,
+                          },
                         },
-                      });
+                      }));
                     },
                   }}
                 />
@@ -148,14 +140,16 @@ function Form({
                     id: "wifi",
                     isChecked: videoCtrls.ctrls.noWifi,
                     onEventHandler: () => {
-                      dispatch({
-                        type: "VideoCtrl",
-                        payload: {
-                          selected: videoCtrls.selected,
-                          audio: videoCtrls.ctrls.audio,
-                          noWifi: !videoCtrls.ctrls.noWifi,
+                      dispatch((prevState) => ({
+                        ...prevState,
+                        videoCtrls: {
+                          ...videoCtrls,
+                          ctrls: {
+                            ...videoCtrls.ctrls,
+                            noWifi: !videoCtrls.ctrls.noWifi,
+                          },
                         },
-                      });
+                      }));
                     },
                   }}
                 />
@@ -171,7 +165,10 @@ function Form({
               id: "location",
               isChecked: useLocation,
               onEventHandler: () => {
-                dispatch({ type: "UseLocation" });
+                dispatch((prevState) => ({
+                  ...prevState,
+                  useLocation: !useLocation,
+                }));
               },
             }}
           />
@@ -182,7 +179,7 @@ function Form({
   );
 }
 
-function getInitalObject(): Model {
+function getInitialState(): Model {
   return {
     emailNotifications: false,
     useLocation: false,
@@ -196,35 +193,12 @@ function getInitalObject(): Model {
   };
 }
 
-function OptionsReducer(state: Model, msg: Msg): Model {
-  switch (msg.type) {
-    case "EmailNotification":
-      return {
-        ...state,
-        emailNotifications: !state.emailNotifications,
-      };
-    case "UseLocation":
-      return {
-        ...state,
-        useLocation: !state.useLocation,
-      };
-    case "VideoCtrl":
-      return {
-        ...state,
-        videoCtrls: {
-          selected: msg.payload.selected,
-          ctrls: {
-            noWifi: msg.payload.noWifi,
-            audio: msg.payload.audio,
-          },
-        },
-      };
-  }
-}
-
 function App() {
-  const [state, dispatch] = useReducer(OptionsReducer, getInitalObject());
-  const [data, setData] = useState<Model>(getInitalObject());
+  const [state, setState] = useState<Model>(getInitialState());
+  const [data, setData] = useState<DataPost>({
+    isPost: false,
+    state: getInitialState(),
+  });
 
   const POST_URL = "https://dummyjson.com/http/200";
 
@@ -234,7 +208,7 @@ function App() {
       try {
         const post = await fetch(POST_URL, {
           method: "POST",
-          body: JSON.stringify(data),
+          body: JSON.stringify(data.state),
         });
         const response = await post.json();
         console.info(response);
@@ -243,13 +217,13 @@ function App() {
       }
     };
 
-    postData();
+    if (data.isPost) postData();
   }, [data]);
 
   return (
     <div className="App">
       <h2 className="title">Select your options</h2>
-      <Form {...{ ...state, dispatch, doPost: setData }} />
+      <Form {...{ ...state, dispatch: setState, doPost: setData }} />
     </div>
   );
 }
